@@ -66,8 +66,8 @@ class MSN:
         # Queremos crear el núcleo normal
         else:
             #creating msn neurons
-            s.msn_d1 = nest.Create('msn', s.params.net.msn.d1_n)
-            s.msn_d2 = nest.Create('msn', s.params.net.msn.d2_n)
+            s.msn_d1 = nest.Create('msn_neuron', s.params.net.msn.d1_n)
+            s.msn_d2 = nest.Create('msn_neuron', s.params.net.msn.d2_n)
             nest.SetStatus(s.msn_d1, s.params.neuron.msn_d1)
             nest.SetStatus(s.msn_d2, s.params.neuron.msn_d2)
 
