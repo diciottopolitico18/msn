@@ -18,13 +18,13 @@ model msn_neuron:
         kernel kernel_nmda = exp(-t / tau_decay_NMDA)
         kernel kernel_gaba = exp(-t / tau_decay_GABA_A)
 
-        inline I_syn_ampa pA = convolve(kernel_ampa, spikes_ampa)
-        inline I_syn_nmda pA = convolve(kernel_nmda, spikes_nmda)
-        inline I_syn_gaba pA = convolve(kernel_gaba, spikes_gaba)
+        inline g_ampa nS = convolve(kernel_ampa, spikes_ampa) * 1 nS
+        inline g_nmda nS = convolve(kernel_nmda, spikes_nmda) * 1 nS
+        inline g_gaba nS = convolve(kernel_gaba, spikes_gaba) * 1 nS
 
-        inline ampa pA = I_syn_ampa * (E_rev_AMPA - V_m)
-        inline nmda pA = I_syn_nmda * (E_rev_NMDA - V_m)
-        inline I_gaba pA = I_syn_gaba * (E_rev_GABA_A - V_m)
+        inline ampa pA = g_ampa * (E_rev_AMPA - V_m)
+        inline nmda pA = g_nmda * (E_rev_NMDA - V_m)
+        inline I_gaba pA = g_gaba * (E_rev_GABA_A - V_m)
 
         inline I_nmda pA = nmda * (1.0 + alpha_1 * y1)
         inline I_ampa pA = ampa * (1.0 - alpha_2 * y2)
@@ -59,14 +59,14 @@ model msn_neuron:
         tau_decay_AMPA ms = 2.0 ms
         tau_decay_GABA_A ms = 2.0 ms
         tau_decay_NMDA ms = 2.0 ms
-        E_rev_AMPA real = 0.0
-        E_rev_GABA_A real = 0.0
-        E_rev_NMDA real = 0.0
+        E_rev_AMPA mV = 0.0 mV
+        E_rev_GABA_A mV = 0.0 mV
+        E_rev_NMDA mV = 0.0 mV
 
     input:
-        spikes_ampa mV <- spike
-        spikes_nmda mV <- spike
-        spikes_gaba mV <- spike
+        spikes_ampa <- spike
+        spikes_nmda <- spike
+        spikes_gaba <- spike
         I_stim pA <- continuous
 
     output:
