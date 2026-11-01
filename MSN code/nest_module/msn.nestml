@@ -1,0 +1,86 @@
+neuron msn:
+  state:
+    V_m mV = -65.0 mV
+    U_m real = 0.0
+    I pA = 0.0 pA # input current
+    dop real = 0.0
+  end
+  equations:
+    kernel kernel_ampa = exp(-t/tau_decay_AMPA)
+    kernel kernel_nmda = exp(-t/tau_decay_NMDA)
+    kernel kernel_gaba = exp(-t/tau_decay_GABA_A)
+
+    inline I_syn_ampa pA = convolve(kernel_ampa, spikes_ampa)
+    inline I_syn_nmda pA = convolve(kernel_nmda, spikes_nmda)
+    inline I_syn_gaba pA = convolve(kernel_gaba, spikes_gaba)
+
+    inline ampa pA = I_syn_ampa * (E_rev_AMPA - V_m)
+    inline nmda pA = I_syn_nmda * (E_rev_NMDA - V_m)
+    inline I_gaba pA = I_syn_gaba * (E_rev_GABA_A - V_m)
+
+    inline I_nmda pA = nmda * (1.0 + alpha_1*y1)
+    inline I_ampa pA = ampa * (1.0 - alpha_2*y2)
+    inline B real = 1.0/(1.0+(0.28)*exp(-0.062*V_m))
+
+    inline I_syn pA = I_ampa + B*I_nmda + I_gaba
+    inline v_r mV = vp * (1.0 + c_1 * y1)
+    inline k real = Kplus * (1.0 - alpha * y2)
+
+    V_m' = (k * (V_m - v_r) * (V_m - V_T)/mV - U_m*mV + ((I + I_e + I_syn)* GOhm))/ (C_m*(ms/pF))
+    U_m' = a * (b * (V_m - v_r) - U_m*mV)/(mV * ms)
+  end
+
+  parameters:
+    a real = 0.03
+    b real = -2.0
+    c mV = -50 mV
+    d real = 100
+    I_e pA = 0pA # constant external input current
+    V_th mV = 35mV #V peak
+    V_min mV = -inf * mV
+    Kplus real = 0.7
+    vp mV = -60.0 mV #resting potential
+    V_T mV = -40.0 mV #threshold potential
+    C_m pF = 100.0 pF # membrane capacitance
+    c_1 real = 0.0289 # K
+    c_2 real = 0.331 # L
+    y1 real = 0.3 # active D1 receptors
+    y2 real = 0.3 # active D2 receptors
+    alpha_1 real = 0.5 # synaptic dopamine
+    alpha_2 real = 0.5 # synaptic dopamine
+    alpha real = 0.032
+    tau_decay_AMPA ms = 2.0 ms
+    tau_decay_GABA_A ms = 2.0 ms
+    tau_decay_NMDA ms = 2.0 ms
+    E_rev_AMPA real = 0.0
+    E_rev_GABA_A real = 0.0
+    E_rev_NMDA real = 0.0
+
+  end
+  input:
+    spikes_ampa mV <-spike
+    spikes_nmda mV <-spike
+    spikes_gaba mV <-spike
+    I_stim pA <-continuous
+  end
+
+  output: spike
+
+  update:
+    integrate_odes()
+    # Add synaptic current
+
+    #V_m += spikes_ampa + spikes_nmda + spikes_gaba
+
+    # lower bound of membrane potential
+    V_m = (V_m < V_min)?V_min:V_m
+
+    # threshold crossing
+    if V_m >= 30mV:
+      dop = d * (1.0 - c_2 * y1)
+      V_m = c
+      U_m += dop
+      emit_spike()
+    end
+  end
+end

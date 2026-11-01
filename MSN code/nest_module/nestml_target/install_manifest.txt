@@ -1,0 +1,1 @@
+/opt/homebrew/Cellar/nest/3.3_1/lib/nest/nestmlmodule.so
