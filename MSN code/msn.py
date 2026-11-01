@@ -85,7 +85,7 @@ class MSN:
 
             #assigning for the striatal channels to be equal to msn channels
             for i in range(len(s.str_channels)):
-                s.str_channels[i] += s.msn_channels[i]
+                s.str_channels[i] = s.msn_channels[i]
 
             # Establezco valores iniciales de las neuronas. Pongo el voltaje al mínimo
             #putting the initial voltage to minimum
