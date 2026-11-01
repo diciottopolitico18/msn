@@ -3,22 +3,22 @@ __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 
-# --- Sistema operativo / editor ---
+# --- OS / editor ---
 .DS_Store
 __MACOSX/
 .vscode/
 .idea/
 
-# --- Build NESTML (rigenerata a ogni compilazione di msn.nestml) ---
+# --- NESTML build (regenerated on every compilation of msn.nestml) ---
 nestml_target/
 *.so
 *.dylib
 
-# --- Sorgenti di terze parti (installati tramite conda/pip, vedi environment.yml) ---
+# --- Third-party sources (installed via conda/pip, see environment.yml) ---
 nest-simulator-master*/
 nestml-*/
 
-# --- Output delle simulazioni ---
+# --- Simulation output ---
 results/
 *_reproduced.png
 *_reproduced.svg

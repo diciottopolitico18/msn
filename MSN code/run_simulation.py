@@ -292,10 +292,10 @@ for ch_idx in [0, 1]:
     steady_duration_s = (total_time - 2000) / 1000.0
     steady_rate = len(steady_spikes) / (n_senders * steady_duration_s) if n_senders > 0 else 0
 
-    ch_name = "SELEZIONATO" if ch_idx == 0 else "NON-SELEZIONATO"
-    print(f"Canale {ch_idx + 1} ({ch_name}):")
-    print(f"  Neuroni: {n_senders}")
-    print(f"  Firing rate stato stazionario (t>2000ms): {steady_rate:.2f} Hz")
+    ch_name = "SELECTED" if ch_idx == 0 else "NON-SELECTED"
+    print(f"Channel {ch_idx + 1} ({ch_name}):")
+    print(f"  Neurons: {n_senders}")
+    print(f"  Steady-state firing rate (t>2000ms): {steady_rate:.2f} Hz")
     print(f"  Target: {'~18.5 Hz' if ch_idx == 0 else '~2 Hz'}")
     print()
 

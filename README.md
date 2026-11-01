@@ -1,27 +1,27 @@
 # msn
 
-Modello spiking di neuroni spinosi medi (MSN) dello striato con modulazione dopaminergica D1/D2, inibizione laterale e tre canali paralleli, in NEST/NESTML.
-Punto di partenza: codice di E. Rusiecka (DTU, 2022), derivato da González-Redondo et al. (2020). Il codice originale è al tag `original`.
-La pianificazione del lavoro è in [MSN code/ROADMAP.md](MSN%20code/ROADMAP.md).
+Spiking model of striatal medium spiny neurons (MSNs) with D1/D2 dopaminergic modulation, lateral inhibition and three parallel channels, implemented in NEST/NESTML.
+Starting point: code by E. Rusiecka (DTU, 2022), derived from González-Redondo et al. (2020). The original code is available at the `original` tag.
 
-## Versioni
+## Versions
 
-| | Originale (2022) | Attuale |
+| | Original (2022) | Current |
 |---|---|---|
 | Python | 3.9 / 3.10 | 3.11 |
 | NEST | 3.x | 3.8 |
 | NESTML | 5.0.0-rc2 | 9.0.1 |
 
-## Installazione
+## Installation
 
 ```bash
 conda env create -f environment.yml
 conda activate env_nest
 ```
 
-## Esecuzione
+## Usage
 
 ```bash
 cd "MSN code"
-python run_simulation.py   # compila msn.nestml, esegue l'esperimento a rampa, salva la figura
+python run_simulation.py           # compiles msn.nestml, runs the ramp experiment, saves the figure
+python analysis/single_neuron.py   # single-neuron tests: synaptic response and D1/D2 f-I curves
 ```
