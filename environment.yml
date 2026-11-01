@@ -1,0 +1,20 @@
+# Ambiente per il modello MSN (NEST + NESTML).
+# Creazione:      conda env create -f environment.yml
+# Aggiornamento:  conda env update -n env_nest -f environment.yml --prune
+name: env_nest
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - nest-simulator=3.8
+  - cxx-compiler        # necessario a NESTML per compilare il modulo C++
+  - cmake
+  - libboost-headers
+  - numpy
+  - scipy
+  - pip
+  - pip:
+      - nestml==9.0.1
+      - matplotlib
+      - ipykernel
+      - jupyter

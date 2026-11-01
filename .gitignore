@@ -1,0 +1,24 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# --- Sistema operativo / editor ---
+.DS_Store
+__MACOSX/
+.vscode/
+.idea/
+
+# --- Build NESTML (rigenerata a ogni compilazione di msn.nestml) ---
+nestml_target/
+*.so
+*.dylib
+
+# --- Sorgenti di terze parti (installati tramite conda/pip, vedi environment.yml) ---
+nest-simulator-master*/
+nestml-*/
+
+# --- Output delle simulazioni ---
+results/
+*_reproduced.png
+*_reproduced.svg
