@@ -19,8 +19,12 @@ params = dotdict()
 # SIMULATION params ############################################################
 
 params.sim = dotdict()
-params.sim.step = 0.01 #Humphries 2009
-params.sim.n_threads = 6
+# Defaults used by utils.kernel.setup_kernel (baseline v0). The analysis scripts can override them
+# from the command line, e.g. `python analysis/network_validation.py --dt 0.01 --threads 4`.
+# dt 0.1 ms for exploration, 0.01 ms (Humphries 2009) to confirm final results.
+params.sim.step = 0.1 # ms
+params.sim.seed = 1
+params.sim.n_threads = 8
 params.sim.verbose = is_verbose
 
 

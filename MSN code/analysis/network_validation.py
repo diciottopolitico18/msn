@@ -27,7 +27,9 @@ import nest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from msn import MSN  # noqa: E402
 from experiment import ExperimentDAHD  # noqa: E402
+from msn_params import params  # noqa: E402
 from utils import transient_selectivity, steadystate_selectivity  # noqa: E402
+from utils.kernel import setup_kernel  # noqa: E402
 
 T_RAMP = 1500.0           # end of the warm-up / start of the ramp (ms)
 T_RAMP_END = 1550.0       # end of the ramp (ms)
@@ -46,10 +48,7 @@ REFERENCE = {
 
 
 def run_one(seed, dt, threads, da):
-    nest.ResetKernel()
-    nest.set_verbosity("M_ERROR")
-    nest.Install("nestmlmodule")
-    nest.SetKernelStatus({"resolution": dt, "rng_seed": seed, "local_num_threads": threads})
+    setup_kernel(dt=dt, seed=seed, threads=threads)
 
     msn = MSN(curr=0)
     exp = ExperimentDAHD(dopamine_level=da, msn=msn)
@@ -140,8 +139,8 @@ def plot_mean_rates(all_spikes, out_path, bin_ms=50.0):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--seeds", type=int, default=10, help="number of seeds (1..N)")
-    ap.add_argument("--dt", type=float, default=0.1, help="simulation resolution in ms")
-    ap.add_argument("--threads", type=int, default=8, help="NEST local_num_threads")
+    ap.add_argument("--dt", type=float, default=params.sim.step, help="simulation resolution in ms")
+    ap.add_argument("--threads", type=int, default=params.sim.n_threads, help="NEST local_num_threads")
     ap.add_argument("--da", type=float, default=0.3, help="dopamine level (y1 = y2)")
     ap.add_argument("--out", default="results/network_validation", help="output folder")
     args = ap.parse_args()
