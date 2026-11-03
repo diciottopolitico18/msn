@@ -195,10 +195,10 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
 
     for events, channel in spikes:
         spike_times = events['times']
-        n_senders = len(np.unique(events['senders']))
+        n_neurons = len(e.msn.msn_channels[channel])  # all neurons of the channel, not only those that spiked
 
         counts, bin_edges = np.histogram(spike_times, bins=n_bins, range=(0, total_time))
-        rates = counts / (n_senders * (time_bin / 1000.0))
+        rates = counts / (n_neurons * (time_bin / 1000.0))
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
         ax2.step(bin_centers, rates, color=new_colors[channel], linewidth=1.5,
@@ -263,17 +263,18 @@ for ch_idx in [0, 1]:
     detector = e.msn.spikedetector_msn_channels[ch_idx]
     events = nest.GetStatus(detector, 'events')[0]
     spike_times = events['times']
-    n_senders = len(np.unique(events['senders']))
+    n_neurons = len(e.msn.msn_channels[ch_idx])  # all neurons of the channel, not only those that spiked
+    n_active = len(np.unique(events['senders']))
 
     # Steady-state period (last 500ms)
     steady_mask = spike_times >= 2000
     steady_spikes = spike_times[steady_mask]
     steady_duration_s = (total_time - 2000) / 1000.0
-    steady_rate = len(steady_spikes) / (n_senders * steady_duration_s) if n_senders > 0 else 0
+    steady_rate = len(steady_spikes) / (n_neurons * steady_duration_s)
 
     ch_name = "SELECTED" if ch_idx == 0 else "NON-SELECTED"
     print(f"Channel {ch_idx + 1} ({ch_name}):")
-    print(f"  Neurons: {n_senders}")
+    print(f"  Neurons: {n_neurons} ({n_active} spiked at least once)")
     print(f"  Steady-state firing rate (t>2000ms): {steady_rate:.2f} Hz")
     print(f"  Target: {'~18.5 Hz' if ch_idx == 0 else '~2 Hz'}")
     print()
