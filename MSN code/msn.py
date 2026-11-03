@@ -9,6 +9,13 @@ import matplotlib.pyplot as plt
 # import utils
 
 
+def _split_by_proportions(nodes, proportions):
+    """Split a NodeCollection into contiguous slices sized by the given proportions."""
+    n = len(nodes)
+    bounds = [0] + [int(n * c) for c in np.cumsum(proportions)[:-1]] + [n]
+    return [nodes[a:b] for a, b in zip(bounds[:-1], bounds[1:])]
+
+
 class MSN:
 
     def __init__(s, curr, _params=None):
@@ -78,8 +85,8 @@ class MSN:
             s.msn = s.msn_d1 + s.msn_d2
 
             #returning a list of lists with neurons for each channel 
-            s.msn_d1_channels = [s.msn_d1[:int((len(s.msn_d1)*2/5))], s.msn_d1[int((len(s.msn_d1)*2/5)):int((len(s.msn_d1)*4/5))], s.msn_d1[int((len(s.msn_d1)*4/5)):]]
-            s.msn_d2_channels = [s.msn_d2[:int((len(s.msn_d2)*2/5))], s.msn_d2[int((len(s.msn_d2)*2/5)):int((len(s.msn_d2)*4/5))], s.msn_d2[int((len(s.msn_d2)*4/5)):]]
+            s.msn_d1_channels = _split_by_proportions(s.msn_d1, s.params.net.p_channels)
+            s.msn_d2_channels = _split_by_proportions(s.msn_d2, s.params.net.p_channels)
             #aggregating the number of d1 and d2 neurons for each channel 
             s.msn_channels = [d1+d2 for (d1,d2) in zip(s.msn_d1_channels, s.msn_d2_channels)]
 
@@ -104,11 +111,12 @@ class MSN:
             
             if type(s.params.net.msn.is_active) is bool:
                 # Connect parrots (ctx) to msn
+                ctx_msn = s.params.syn.ctx_msn
                 for i in channels:
-                    nest.Connect(pre=s.parrots_str[i][:len(s.msn_channels[i])], post=s.msn_channels[i],
-                                    conn_spec={'rule':'one_to_one'}, syn_spec={'synapse_model': 'static_synapse', 'delay': 10.0, 'weight': 1.0166666666666666, 'receptor_type': 1})
                     nest.Connect(s.parrots_str[i][:len(s.msn_channels[i])], s.msn_channels[i],
-                                    conn_spec={'rule':'one_to_one'}, syn_spec={'synapse_model': 'static_synapse', 'delay': 10.0, 'weight': 0.0190625, 'receptor_type': 2})
+                                    conn_spec=dict(ctx_msn.conn_spec), syn_spec=dict(ctx_msn.syn_spec_ampa))
+                    nest.Connect(s.parrots_str[i][:len(s.msn_channels[i])], s.msn_channels[i],
+                                    conn_spec=dict(ctx_msn.conn_spec), syn_spec=dict(ctx_msn.syn_spec_nmda))
 
 
                 # Connect msn to itself, depending on the type of connectivity defined (random or physical)
@@ -116,7 +124,11 @@ class MSN:
                 
 
     def _connect_msn_to_msn(s):
-        nest.Connect(s.msn, s.msn, conn_spec={'rule': 'pairwise_bernoulli', 'p': 0.31762652705061084, 'allow_autapses': False}, syn_spec={'synapse_model': 'static_synapse', 'delay': nest.random.uniform(min=1.0, max=2.0), 'weight': 0.25, 'receptor_type': 3})
+        msn_msn = s.params.syn.msn_msn
+        syn_spec = dict(msn_msn.syn_spec_random)
+        delay = syn_spec['delay']
+        syn_spec['delay'] = nest.random.uniform(min=delay['low'], max=delay['high'])
+        nest.Connect(s.msn, s.msn, conn_spec=dict(msn_msn.conn_spec_random), syn_spec=syn_spec)
 
     def _create_detectors(s):
         s.spikedetector_global = nest.Create('spike_recorder')
