@@ -22,6 +22,7 @@ import nest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from msn_params import params  # noqa: E402
+from utils.kernel import setup_kernel  # noqa: E402
 
 # Synaptic weights as in msn.py (paper, Tables 2 and 3)
 W_AMPA = 6.1 / params.neuron.msn_d1.tau_decay_AMPA
@@ -34,14 +35,6 @@ RECEPTORS = [  # name, receptor_type, weight, recordable variable, tau parameter
     ("GABA", 3, W_GABA, "kernel_gaba__X__spikes_gaba", "tau_decay_GABA_A"),
 ]
 CELLS = {"D1": params.neuron.msn_d1, "D2": params.neuron.msn_d2}
-
-
-def reset_kernel(dt):
-    nest.ResetKernel()  # in NEST 3.x this also unloads external modules
-    nest.set_verbosity("M_ERROR")
-    nest.Install("nestmlmodule")
-    nest.resolution = dt
-    nest.rng_seed = 1
 
 
 def create_msn(cell_params, n=1, da=None):
@@ -64,7 +57,7 @@ def synaptic_test(dt, out_dir):
 
     for col, (name, rport, w, var, tau_key) in enumerate(RECEPTORS):
         for cell, cp in CELLS.items():
-            reset_kernel(dt)
+            setup_kernel(dt=dt)
             n = create_msn(cp)
             sg = nest.Create("spike_generator", params={"spike_times": [t_spike]})
             nest.Connect(sg, n, syn_spec={"weight": w, "delay": delay, "receptor_type": rport})
@@ -125,7 +118,7 @@ def synaptic_test(dt, out_dir):
 def fi_test(dt, out_dir, da_levels=(0.0, 0.3, 0.6, 1.0), i_max=600.0, i_step=5.0,
             t_settle=300.0, t_meas=1000.0):
     currents = np.arange(0.0, i_max + i_step, i_step)
-    reset_kernel(dt)
+    setup_kernel(dt=dt)
 
     groups = {}
     for cell, cp in CELLS.items():
@@ -171,7 +164,7 @@ def fi_test(dt, out_dir, da_levels=(0.0, 0.3, 0.6, 1.0), i_max=600.0, i_step=5.0
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--dt", type=float, default=0.1, help="simulation resolution in ms (default 0.1)")
+    ap.add_argument("--dt", type=float, default=params.sim.step, help="simulation resolution in ms")
     ap.add_argument("--out", default="results/single_neuron", help="output folder")
     args = ap.parse_args()
 

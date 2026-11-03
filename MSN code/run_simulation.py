@@ -77,12 +77,13 @@ except Exception as e:
 
 # ─── Step 2: Load the compiled module into NEST ──────────────────────────────
 print("\n" + "=" * 60)
-print("Step 2: Loading nestmlmodule into NEST")
+print("Step 2: Setting up the NEST kernel and loading nestmlmodule")
 print("=" * 60)
 
 try:
-    nest.Install("nestmlmodule")
-    print("✓ Module loaded successfully!")
+    from utils.kernel import setup_kernel
+    setup_kernel(verbosity="M_WARNING")
+    print("✓ Kernel ready, module loaded successfully!")
 except Exception as e:
     print(f"✗ Module loading failed: {e}")
     import traceback
