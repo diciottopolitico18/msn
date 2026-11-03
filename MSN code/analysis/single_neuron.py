@@ -24,15 +24,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from msn_params import params  # noqa: E402
 from utils.kernel import setup_kernel  # noqa: E402
 
-# Synaptic weights as in msn.py (paper, Tables 2 and 3)
-W_AMPA = 6.1 / params.neuron.msn_d1.tau_decay_AMPA
-W_NMDA = 3.05 / params.neuron.msn_d1.tau_decay_NMDA
-W_GABA = params.syn.msn_msn.syn_spec_random.weight
+# Synaptic weights used by msn.py (paper, Tables 2 and 3)
+SYN_AMPA = params.syn.ctx_msn.syn_spec_ampa
+SYN_NMDA = params.syn.ctx_msn.syn_spec_nmda
+SYN_GABA = params.syn.msn_msn.syn_spec_random
 
 RECEPTORS = [  # name, receptor_type, weight, recordable variable, tau parameter
-    ("AMPA", 1, W_AMPA, "kernel_ampa__X__spikes_ampa", "tau_decay_AMPA"),
-    ("NMDA", 2, W_NMDA, "kernel_nmda__X__spikes_nmda", "tau_decay_NMDA"),
-    ("GABA", 3, W_GABA, "kernel_gaba__X__spikes_gaba", "tau_decay_GABA_A"),
+    ("AMPA", SYN_AMPA.receptor_type, SYN_AMPA.weight, "kernel_ampa__X__spikes_ampa", "tau_decay_AMPA"),
+    ("NMDA", SYN_NMDA.receptor_type, SYN_NMDA.weight, "kernel_nmda__X__spikes_nmda", "tau_decay_NMDA"),
+    ("GABA", SYN_GABA.receptor_type, SYN_GABA.weight, "kernel_gaba__X__spikes_gaba", "tau_decay_GABA_A"),
 ]
 CELLS = {"D1": params.neuron.msn_d1, "D2": params.neuron.msn_d2}
 
