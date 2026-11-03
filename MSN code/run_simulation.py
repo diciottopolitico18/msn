@@ -3,17 +3,26 @@
 run_simulation.py — Standalone script to reproduce the MSN general behaviour.
 
 Replicates the workflow of '01 - General behaviour.ipynb':
-  1. Compiles the NESTML MSN model for the local NEST installation
+  1. Loads the compiled NESTML MSN model (run compile_module.py first)
   2. Runs the cortical ramp experiment (ExperimentDAHD)
   3. Generates the composite raster + firing rate figure
 
 Usage:
-    conda run -n env_nest python run_simulation.py
+    conda run -n env_nest python run_simulation.py [--dt 0.1] [--seed 1] [--threads 8] [--da 0.3]
 """
 
+import argparse
 import sys
 import os
-import shutil
+
+from msn_params import params
+
+ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("--dt", type=float, default=params.sim.step, help="simulation resolution in ms")
+ap.add_argument("--seed", type=int, default=params.sim.seed, help="NEST rng_seed")
+ap.add_argument("--threads", type=int, default=params.sim.n_threads, help="NEST local_num_threads")
+ap.add_argument("--da", type=float, default=0.3, help="dopamine level")
+args = ap.parse_args()
 
 # ─── Step 0: Print environment info ───────────────────────────────────────────
 print("=" * 60)
@@ -34,82 +43,51 @@ import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend for headless rendering
 import matplotlib.pyplot as plt
 
-try:
-    import pynestml
-    print(f"NESTML: {pynestml.__version__}")
-except Exception:
-    print("NESTML: version unknown")
-
-from pynestml.frontend.pynestml_frontend import generate_nest_target
+print(f"dt = {args.dt} ms · seed = {args.seed} · threads = {args.threads} · DA = {args.da}")
 
 
-# ─── Step 1: Compile the NESTML module ────────────────────────────────────────
+# ─── Step 1: Load the compiled module into NEST ──────────────────────────────
 print("\n" + "=" * 60)
-print("Step 1: Compiling NESTML MSN module")
+print("Step 1: Setting up the NEST kernel and loading nestmlmodule")
 print("=" * 60)
 
-nestml_input = os.path.join(os.path.dirname(__file__), "nest_module", "msn.nestml")
-nestml_target = os.path.join(os.path.dirname(__file__), "nest_module", "nestml_target")
-
-# Clean old build artifacts from macOS
-if os.path.exists(nestml_target):
-    print(f"Cleaning old build dir: {nestml_target}")
-    shutil.rmtree(nestml_target)
-
-print(f"Input:  {nestml_input}")
-print(f"Target: {nestml_target}")
-print("Generating NEST target (this may take a minute)...")
-
-try:
-    generate_nest_target(
-        input_path=nestml_input,
-        target_path=nestml_target,
-        logging_level="WARNING",
-    )
-    print("✓ NESTML compilation successful!")
-except Exception as e:
-    print(f"✗ NESTML compilation failed: {e}")
-    print("\nFull traceback:")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-
-
-# ─── Step 2: Load the compiled module into NEST ──────────────────────────────
-print("\n" + "=" * 60)
-print("Step 2: Setting up the NEST kernel and loading nestmlmodule")
-print("=" * 60)
+# Warn if msn.nestml was edited after the module was last compiled
+nestml_input = os.path.join(os.path.dirname(os.path.abspath(__file__)), "nest_module", "msn.nestml")
+module_path = os.path.join(NEST_INSTALL, "lib", "nest", "nestmlmodule.so")
+if os.path.exists(module_path) and os.path.getmtime(nestml_input) > os.path.getmtime(module_path):
+    print("⚠ msn.nestml is newer than the installed nestmlmodule: run compile_module.py to rebuild it.")
 
 try:
     from utils.kernel import setup_kernel
-    setup_kernel(verbosity="M_WARNING")
+    setup_kernel(dt=args.dt, seed=args.seed, threads=args.threads, verbosity="M_WARNING")
     print("✓ Kernel ready, module loaded successfully!")
 except Exception as e:
     print(f"✗ Module loading failed: {e}")
+    print("Compile and install it first with: python compile_module.py")
     import traceback
     traceback.print_exc()
     sys.exit(1)
 
 
-# ─── Step 3: Run the simulation ──────────────────────────────────────────────
+# ─── Step 2: Run the simulation ──────────────────────────────────────────────
 print("\n" + "=" * 60)
-print("Step 3: Running MSN simulation")
+print("Step 2: Running MSN simulation")
 print("=" * 60)
 
 from msn import MSN
 from experiment import ExperimentDAHD
 
 msn = MSN(curr=0)
-e_normal = ExperimentDAHD(dopamine_level=0.3, msn=msn)
+e_normal = ExperimentDAHD(dopamine_level=args.da, msn=msn)
 
 print("Simulating (warm-up 1500ms + ramp 50ms + steady 1000ms = 2550ms total)...")
 e_normal.run()
 print("✓ Simulation complete!")
 
 
-# ─── Step 4: Generate the figure ─────────────────────────────────────────────
+# ─── Step 3: Generate the figure ─────────────────────────────────────────────
 print("\n" + "=" * 60)
-print("Step 4: Generating figures")
+print("Step 3: Generating figures")
 print("=" * 60)
 
 e = e_normal
@@ -272,9 +250,9 @@ print(f"✓ Saved: {png_path}")
 print(f"✓ Saved: {svg_path}")
 
 
-# ─── Step 5: Print firing rate summary ───────────────────────────────────────
+# ─── Step 4: Print firing rate summary ───────────────────────────────────────
 print("\n" + "=" * 60)
-print("Step 5: Firing rate analysis")
+print("Step 4: Firing rate analysis")
 print("=" * 60)
 
 time_bin_analysis = 50.0
