@@ -141,7 +141,7 @@ def main():
     ap.add_argument("--seeds", type=int, default=10, help="number of seeds (1..N)")
     ap.add_argument("--dt", type=float, default=params.sim.step, help="simulation resolution in ms")
     ap.add_argument("--threads", type=int, default=params.sim.n_threads, help="NEST local_num_threads")
-    ap.add_argument("--da", type=float, default=0.3, help="dopamine level (y1 = y2)")
+    ap.add_argument("--da", type=float, default=0.3, help="dopamine level (phi_1 = phi_2)")
     ap.add_argument("--out", default="results/network_validation", help="output folder")
     args = ap.parse_args()
 

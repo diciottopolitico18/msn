@@ -49,10 +49,10 @@ class ExperimentDAHD(Experiment):
 
         # Setting dopamine
         s.dopamine_level = dopamine_level
-        s.msn.params.neuron.msn_d1.y1 = dopamine_level
-        s.msn.params.neuron.msn_d1.y2 = dopamine_level
-        s.msn.params.neuron.msn_d2.y1 = dopamine_level
-        s.msn.params.neuron.msn_d2.y2 = dopamine_level
+        s.msn.params.neuron.msn_d1.phi_1 = dopamine_level
+        s.msn.params.neuron.msn_d1.phi_2 = dopamine_level
+        s.msn.params.neuron.msn_d2.phi_1 = dopamine_level
+        s.msn.params.neuron.msn_d2.phi_2 = dopamine_level
 
         # Configurando el modelo
         s.msn.configure()
@@ -140,10 +140,10 @@ class ExperimentSSTS(Experiment):
         # s.bg.params.net.snr.n = 3000 #More neurons in SNr to have more stable measurements
 
         # Setting dopamine
-        s.msn.params.neuron.msn_d1.y1 = dopamine_level
-        s.msn.params.neuron.msn_d1.y2 = dopamine_level
-        s.msn.params.neuron.msn_d2.y1 = dopamine_level
-        s.msn.params.neuron.msn_d2.y2 = dopamine_level
+        s.msn.params.neuron.msn_d1.phi_1 = dopamine_level
+        s.msn.params.neuron.msn_d1.phi_2 = dopamine_level
+        s.msn.params.neuron.msn_d2.phi_1 = dopamine_level
+        s.msn.params.neuron.msn_d2.phi_2 = dopamine_level
 
         # # Setting Huntington
         # s.bg.params.syn.ctx_msn.syn_spec_nmda.weight = (3.05 + 3.05*huntington_level) / s.bg.params.neuron.msn_d1.tau_syn[1]

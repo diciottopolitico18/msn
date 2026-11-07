@@ -26,13 +26,13 @@ model msn_neuron:
         inline nmda pA = g_nmda * (E_rev_NMDA - V_m)
         inline I_gaba pA = g_gaba * (E_rev_GABA_A - V_m)
 
-        inline I_nmda pA = nmda * (1.0 + alpha_1 * y1)
-        inline I_ampa pA = ampa * (1.0 - alpha_2 * y2)
+        inline I_nmda pA = nmda * (1.0 + beta_1 * phi_1)
+        inline I_ampa pA = ampa * (1.0 - beta_2 * phi_2)
         inline B real = 1.0 / (1.0 + (0.28) * exp(-0.062 * V_m))
 
         inline I_syn pA = I_ampa + B * I_nmda + I_gaba
-        inline v_r mV = vp * (1.0 + c_1 * y1)
-        inline k real = Kplus * (1.0 - alpha * y2)
+        inline v_r mV = vp * (1.0 + K_d1 * phi_1)
+        inline k real = Kplus * (1.0 - alpha * phi_2)
 
         V_m' = (k * (V_m - v_r) * (V_m - V_T) / 1 mV - U_m * 1 mV + ((I + I_e + I_syn) * 1 GOhm)) / (C_m * (1 ms / 1 pF))
         U_m' = a * (b * (V_m - v_r) - U_m * 1 mV) / (1 mV * 1 ms)
@@ -49,12 +49,12 @@ model msn_neuron:
         vp mV = -60.0 mV        # resting potential
         V_T mV = -40.0 mV       # threshold potential
         C_m pF = 100.0 pF       # membrane capacitance
-        c_1 real = 0.0289       # K (inward rectifying K+ current)
-        c_2 real = 0.331        # L (L-type Ca2+ activation)
-        y1 real = 0.3           # fraction of active D1 receptors
-        y2 real = 0.3           # fraction of active D2 receptors
-        alpha_1 real = 0.5      # NMDA enhancement factor
-        alpha_2 real = 0.5      # AMPA reduction factor
+        K_d1 real = 0.0289      # K (inward rectifying K+ current)
+        L_d1 real = 0.331       # L (L-type Ca2+ activation)
+        phi_1 real = 0.3        # fraction of active D1 receptors
+        phi_2 real = 0.3        # fraction of active D2 receptors
+        beta_1 real = 0.5       # NMDA enhancement factor
+        beta_2 real = 0.5       # AMPA reduction factor
         alpha real = 0.032      # current attenuation factor
         tau_decay_AMPA ms = 2.0 ms
         tau_decay_GABA_A ms = 2.0 ms
@@ -80,7 +80,7 @@ model msn_neuron:
 
     onCondition(V_m >= 30 mV):
         # threshold crossing
-        dop = d * (1.0 - c_2 * y1)
+        dop = d * (1.0 - L_d1 * phi_1)
         V_m = c
         U_m += dop
         emit_spike()
