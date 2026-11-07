@@ -8,10 +8,10 @@
 model msn_neuron:
 
     state:
-        V_m mV = -65.0 mV
+        V_m mV = -65.0 mV # Membrane potential 
         U_m real = 0.0
         I pA = 0.0 pA    # input current
-        dop real = 0.0
+        dop real = 0.0  # Used for reset after the spike
 
     equations:
         kernel kernel_ampa = exp(-t / tau_decay_AMPA)
