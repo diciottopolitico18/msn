@@ -66,13 +66,13 @@ params.neuron.msn_d1.a = 0.01
 params.neuron.msn_d1.b = -20.0
 params.neuron.msn_d1.c = -55.0
 params.neuron.msn_d1.d = 91.0
-params.neuron.msn_d1.y1 = 0.3
-params.neuron.msn_d1.y2 = 0.3
-params.neuron.msn_d1.alpha_1 = 6.3 #Humphries
-params.neuron.msn_d1.alpha_2 = 0.215 #Humphries
+params.neuron.msn_d1.phi_1 = 0.3
+params.neuron.msn_d1.phi_2 = 0.3
+params.neuron.msn_d1.beta_1 = 6.3 #Humphries
+params.neuron.msn_d1.beta_2 = 0.215 #Humphries
 params.neuron.msn_d1.alpha = 0.0 #D1 type
-params.neuron.msn_d1.c_1 = 0.0289 #D1 type
-params.neuron.msn_d1.c_2 = 0.331 #D1 type
+params.neuron.msn_d1.K_d1 = 0.0289 #D1 type
+params.neuron.msn_d1.L_d1 = 0.331 #D1 type
 
 
 params.neuron.msn_d2 = dotdict()
@@ -91,13 +91,13 @@ params.neuron.msn_d2.a = 0.01
 params.neuron.msn_d2.b = -20.0
 params.neuron.msn_d2.c = -55.0
 params.neuron.msn_d2.d = 91.0
-params.neuron.msn_d2.y1 = 0.3 #phi1 in the repo, the proportion of active D1 receptors
-params.neuron.msn_d2.y2 = 0.3 #phi2 in the repo, the proportion of active D2 receptors
-params.neuron.msn_d2.alpha_1 = 6.3 #Humphries beta1 in the repo, synaptic dopamine, scaling coefficients determining the relationship between dopamine receptor occupancy and the effect magnitude
-params.neuron.msn_d2.alpha_2 = 0.215 #Humphries beta2 in the repo
+params.neuron.msn_d2.phi_1 = 0.3 #phi1 in the repo, the proportion of active D1 receptors
+params.neuron.msn_d2.phi_2 = 0.3 #phi2 in the repo, the proportion of active D2 receptors
+params.neuron.msn_d2.beta_1 = 6.3 #Humphries beta1 in the repo, synaptic dopamine, scaling coefficients determining the relationship between dopamine receptor occupancy and the effect magnitude
+params.neuron.msn_d2.beta_2 = 0.215 #Humphries beta2 in the repo
 params.neuron.msn_d2.alpha = 0.032 #D2 type # alpha in the repo, lowers current values for D2
-params.neuron.msn_d2.c_1 = 0.0 #D2 type K in the repo, potassium, enhancing the inward-rectifying potassium current
-params.neuron.msn_d2.c_2 = 0.0 #D2 type L in the repo, L-type calcium current, lowering the activation threshold of the calcium current 
+params.neuron.msn_d2.K_d1 = 0.0 #D2 type K in the repo, potassium, enhancing the inward-rectifying potassium current
+params.neuron.msn_d2.L_d1 = 0.0 #D2 type L in the repo, L-type calcium current, lowering the activation threshold of the calcium current 
 
 
 

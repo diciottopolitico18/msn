@@ -40,8 +40,8 @@ CELLS = {"D1": params.neuron.msn_d1, "D2": params.neuron.msn_d2}
 def create_msn(cell_params, n=1, da=None):
     p = dict(cell_params)
     if da is not None:
-        p["y1"] = da
-        p["y2"] = da
+        p["phi_1"] = da
+        p["phi_2"] = da
     neurons = nest.Create("msn_neuron", n, params=p)
     neurons.V_m = cell_params["vp"]  # same initial condition as msn.py
     return neurons
