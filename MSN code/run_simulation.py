@@ -16,6 +16,8 @@ import sys
 import os
 
 from msn_params import params
+from msn import MSN
+from experiment import ExperimentDAHD
 
 ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 ap.add_argument("--dt", type=float, default=params.sim.step, help="simulation resolution in ms")
@@ -73,9 +75,6 @@ except Exception as e:
 print("\n" + "=" * 60)
 print("Step 2: Running MSN simulation")
 print("=" * 60)
-
-from msn import MSN
-from experiment import ExperimentDAHD
 
 msn = MSN(curr=0)
 e_normal = ExperimentDAHD(dopamine_level=args.da, msn=msn)
