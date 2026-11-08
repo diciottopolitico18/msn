@@ -53,9 +53,10 @@ def create_msn(cell_params, n=1, da=None):
 def synaptic_test(dt, out_dir):
     t_spike, delay, t_end = 200.0, 1.0, 1200.0
     rows = []
-    fig, axes = plt.subplots(2, 3, figsize=(13, 6), sharex="col")
+    fig, axes = plt.subplots(2, 3, figsize=(14, 8), sharex="col")
 
     for col, (name, rport, w, var, tau_key) in enumerate(RECEPTORS):
+        taus = {}
         for cell, cp in CELLS.items():
             setup_kernel(dt=dt)
             n = create_msn(cp)
@@ -87,18 +88,38 @@ def synaptic_test(dt, out_dir):
             rows.append((name, cell, w, h_max, jump_ok, tau, tau_fit, psp))
 
             sel = (t > t_arr - 10) & (t < t_arr + min(5 * tau, 900))
-            axes[0, col].plot(t[sel] - t_arr, h[sel], label=cell)
+            line, = axes[0, col].plot(t[sel] - t_arr, h[sel], label=cell)
             axes[1, col].plot(t[sel] - t_arr, dv[sel], label=cell)
+            # mark t = tau, where h has decayed to w/e (about 37 % of the peak)
+            axes[0, col].plot([tau, tau], [0, w / np.e], color=line.get_color(), ls="--", lw=1)
+            axes[0, col].plot(tau, w / np.e, "o", color=line.get_color(), ms=4)
+            taus[cell] = tau
 
-        axes[0, col].set_title(f"{name}  (w = {w:.4g})")
+        if len(set(taus.values())) == 1:
+            tau_txt = f"τ = {taus['D1']:g} ms"
+        else:
+            tau_txt = "τ = " + " / ".join(f"{v:g} ms ({c})" for c, v in taus.items())
+        axes[0, col].set_title(f"{name}\nw = {w:.4g} nS, {tau_txt}")
         axes[0, col].axhline(w, color="gray", ls=":", lw=1)
         axes[1, col].set_xlabel("time from spike arrival (ms)")
-        axes[0, col].legend()
+        axes[0, col].tick_params(labelbottom=True)  # sharex hides the numbers on the top row
 
-    axes[0, 0].set_ylabel("h  (g = h · 1 nS)")
+    for ax in axes.flat:
+        ax.grid(True, alpha=0.3)
+    axes[0, 0].set_ylabel("conductance h (nS)")
     axes[1, 0].set_ylabel("ΔV_m (mV)")
-    fig.suptitle(f"Response to a single spike — dt = {dt} ms")
+    fig.suptitle("Response to a single spike: exponential decay of the synaptic "
+                 "conductance (top) and PSP (bottom)\n"
+                 f"dt = {dt} ms, DA = {CELLS['D1']['phi_1']}")
+    # one legend for all six panels, below the title: cells + markers of the top row
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    handles += [plt.Line2D([], [], color="gray", ls=":", lw=1),
+                plt.Line2D([], [], color="black", ls="--", lw=1, marker="o", ms=4)]
+    labels += ["peak w (top row)", "t = τ, where h = w/e ≈ 0.37 w (top row)"]
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.915),
+               ncol=len(labels), frameon=False)
     fig.tight_layout()
+    fig.subplots_adjust(top=0.80, hspace=0.3)  # room for title and legend
     fig.savefig(os.path.join(out_dir, "A_synaptic_response.png"), dpi=150)
     plt.close(fig)
 
@@ -131,28 +152,54 @@ def fi_test(dt, out_dir, da_levels=(0.0, 0.3, 0.6, 1.0), i_max=600.0, i_step=5.0
 
     nest.Simulate(t_settle + t_meas)
 
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), sharey=True)
+    # DA is ordered: light gray (DA = 0) -> black (DA = 1)
+    colors = plt.cm.Greys(np.linspace(0.4, 1.0, len(da_levels)))
+    da_effect = {"D1": "DA acts on v_r (resting potential)\n"
+                       "and d (after-spike reset of the recovery variable u)",
+                 "D2": "DA acts on k (gain of the quadratic term,\n"
+                       "i.e. how fast V_m accelerates towards the spike)"}
+    zoom_i, zoom_f = (200.0, 320.0), (-1.0, 20.0)   # region around the rheobase
     print("\nB) f-I curve  (rate in Hz over %.0f ms after %.0f ms of settling)" % (t_meas, t_settle))
     print(f"{'cell':4} {'DA':>4} {'rheobase (pA)':>14} {'f@300pA':>8} {'f@400pA':>8} {'f@600pA':>8}")
     results = {}
     for ax, cell in zip(axes, CELLS):
-        for da in da_levels:
+        # D2 curves leave the upper-left corner empty: legend on the right, bigger zoom
+        inset_box = [0.07, 0.30, 0.40, 0.38] if cell == "D1" else [0.08, 0.40, 0.50, 0.50]
+        inset = ax.inset_axes(inset_box)
+        for da, color in zip(da_levels, colors):
             n, sr = groups[(cell, da)]
             senders = sr.events["senders"]
             first = n.global_id if len(n) == 1 else n[0].global_id
             counts = np.bincount(senders - first, minlength=len(n))
             rate = counts / (t_meas / 1000.0)
             results[(cell, da)] = rate
-            ax.plot(currents, rate, label=f"DA = {da}")
             idx = np.nonzero(rate > 0)[0]
             rheo = currents[idx[0]] if len(idx) else np.nan
+            for a in (ax, inset):
+                a.plot(currents, rate, color=color, label=f"DA = {da}  (rheobase {rheo:.0f} pA)")
+                # rheobase marker: first current that produces spikes
+                a.plot(rheo, rate[idx[0]], "o", color=color, ms=5, zorder=3)
             f_at = lambda i: rate[np.argmin(np.abs(currents - i))]
             print(f"{cell:4} {da:4.1f} {rheo:14.0f} {f_at(300):8.1f} {f_at(400):8.1f} {f_at(600):8.1f}")
-        ax.set_title(f"MSN {cell}")
-        ax.set_xlabel("I_e (pA)")
-        ax.legend()
+        ax.set_title(f"MSN {cell}", fontsize=12, pad=34)
+        ax.text(0.5, 1.01, da_effect[cell], transform=ax.transAxes, ha="center",
+                va="bottom", fontsize=9, style="italic")
+        ax.set_xlabel("injected current I_e (pA)")
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc="upper left" if cell == "D1" else "upper right", fontsize=8)
+        inset.set_xlim(*zoom_i)
+        inset.set_ylim(*zoom_f)
+        inset.set_yticks(np.arange(0, zoom_f[1] + 1, 5))
+        inset.grid(True, alpha=0.3)
+        inset.tick_params(labelsize=7)
+        inset.set_title("zoom on the rheobase", fontsize=8)
+        ax.indicate_inset_zoom(inset, edgecolor="gray")
     axes[0].set_ylabel("firing rate (Hz)")
-    fig.suptitle(f"f–I curve — dt = {dt} ms")
+    fig.suptitle("f–I curve: firing rate vs injected current at different dopamine levels\n"
+                 "each point: one neuron with a constant injected current, steady-state firing rate\n"
+                 f"integration step dt = {dt} ms",
+                 fontsize=12)
     fig.tight_layout()
     fig.savefig(os.path.join(out_dir, "B_fI_curve.png"), dpi=150)
     plt.close(fig)
