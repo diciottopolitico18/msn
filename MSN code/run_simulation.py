@@ -91,9 +91,13 @@ print("=" * 60)
 
 e = e_normal
 
-# Colors matching the original notebook
-new_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b',
-              '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+# Colours used consistently across the project figures:
+#   D1 = blue, D2 = orange (as in analysis/single_neuron.py)
+#   channel 1 (selected) = violet, channel 2 (non-selected) = green
+# The original notebook used blue / orange for the channels, which clashed with D1 / D2.
+CHANNEL_COLORS = ['#E47AFF', '#5D8500']
+POP_COLORS = {'D1': '#1f77b4', 'D2': '#ff7f0e'}
+ONSET_LINE = dict(color='#2ca02c', linestyle='--')   # stimulus onset, same green as the original figure
 
 
 def plot_input_from_cortex(ax, channels=[0, 1]):
@@ -140,18 +144,19 @@ def plot_input_from_cortex(ax, channels=[0, 1]):
         rates.append(rates[-1])
         times.append(2550)
 
-        ax.plot(times, rates, color=new_colors[ch_idx], linewidth=1.5)
+        ax.plot(times, rates, color=CHANNEL_COLORS[ch_idx], linewidth=1.5)
 
-    ax.set_ylabel('Ctx')
+    ax.axvline(x=1500, **ONSET_LINE)  # stimulus onset, as in the MSN panel
+    ax.set_ylabel('Ctx input\n(Hz per afferent)', fontsize=14)
     ax.set_xlim(0, 2550)
     ax.set_xticks([])
 
 
 def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
-               time_axis=True, alpha_spike=0.2, alpha_background=0.125):
+               time_axis=True, alpha_spike=0.5, alpha_background=0.125):
     """Custom raster plot matching the notebook's inline implementation."""
     ax1 = ax
-    ax1.set_ylabel(nucleus_name)
+    ax1.set_ylabel(f'{nucleus_name} raster\n({n_neurons} neurons per channel)', fontsize=16)
     nucleus_name_lower = nucleus_name.lower()
 
     if type(channels) is not list:
@@ -161,7 +166,7 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
     for i, channel in enumerate(channels):
         # Background shading
         ax1.axhspan(i * n_neurons, (i + 1) * n_neurons,
-                    facecolor=new_colors[channel], alpha=alpha_background)
+                    facecolor=CHANNEL_COLORS[channel], alpha=alpha_background)
 
         # Get spike data for this channel
         detector = e.msn.spikedetector_msn_channels[channel]
@@ -181,7 +186,7 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
             mask = senders == nid
             spike_times = times[mask]
             ax1.plot(spike_times, np.full_like(spike_times, i * n_neurons + j),
-                    '.', markersize=1, color='gray', alpha=alpha_spike)
+                    '.', markersize=2.5, color='black', alpha=alpha_spike)
 
         spikes.append((events, channel))
 
@@ -194,21 +199,26 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
 
     for events, channel in spikes:
         spike_times = events['times']
-        n_neurons = len(e.msn.msn_channels[channel])  # all neurons of the channel, not only those that spiked
+        n_channel = len(e.msn.msn_channels[channel])  # all neurons of the channel, not only those that spiked
 
         counts, bin_edges = np.histogram(spike_times, bins=n_bins, range=(0, total_time))
-        rates = counts / (n_neurons * (time_bin / 1000.0))
+        rates = counts / (n_channel * (time_bin / 1000.0))
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
 
-        ax2.step(bin_centers, rates, color=new_colors[channel], linewidth=1.5,
+        ax2.step(bin_centers, rates, color=CHANNEL_COLORS[channel], linewidth=1.5,
                 where='mid')
 
     ax2.set_ylim(0, 22)
+    ax2.grid(True, axis='y', alpha=0.3)   # horizontal lines on the firing-rate scale
+    ax1.grid(True, axis='x', alpha=0.3)   # vertical lines on the time axis
     ax1.set_ylim(0, n_neurons * len(channels))
     ax1.set_xlim(0, total_time)
+    # left axis: one band of n_neurons sampled neurons per channel
+    ax1.set_yticks([(i + 0.5) * n_neurons for i in range(len(channels))])
+    ax1.set_yticklabels([f'Ch {c + 1}' for c in channels])
 
     # Stimulus onset line
-    ax1.axvline(x=1500, color='green', linestyle='--', alpha=0.7)
+    ax1.axvline(x=1500, **ONSET_LINE)
 
     if time_axis:
         ax1.set_xlabel('Time (ms)')
@@ -220,33 +230,97 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
 plt.rcParams['figure.figsize'] = [16.0, 8.0]
 plt.rcParams['font.size'] = 20
 
-fig = plt.figure()
-ax_ctx = plt.subplot2grid((9, 1), (0, 0), rowspan=2)
-ax_msn = plt.subplot2grid((9, 1), (2, 0), rowspan=7)
+# Layout, from top to bottom: title of the Ctx panel, shared legend, Ctx panel,
+# title of the MSN panel, MSN panel (positions set by hand, no tight_layout)
+fig = plt.figure(figsize=(16.0, 10.0))
+gs = fig.add_gridspec(2, 1, height_ratios=[2, 7], hspace=0.45, top=0.87, bottom=0.08)
+ax_ctx = fig.add_subplot(gs[0])
+ax_msn = fig.add_subplot(gs[1])
 
 plot_input_from_cortex(ax_ctx)
 rasterplot(ax_msn, 'MSN', channels=[0, 1])
 
-ax1 = fig.add_subplot(111, frameon=False)
-ax1.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
-ax1.set_xlabel('Time (ms)')
-ax1.set_ylabel('Nucleus')
-
-ax2 = ax1.twinx()
-ax2.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False)
-ax2.set_ylabel('Firing rate (Hz)')
-
-plt.tight_layout()
+fig.text(0.5, 0.975, 'Cortical input: firing rate of each cortical afferent to the two action channels',
+         ha='center', va='top', fontsize=20)
+legend_handles = [
+    plt.Line2D([], [], color=CHANNEL_COLORS[0], linewidth=2.5),
+    plt.Line2D([], [], color=CHANNEL_COLORS[1], linewidth=2.5),
+    plt.Line2D([], [], color='black', marker='.', linestyle='none', markersize=8, alpha=0.6),
+    plt.Line2D([], [], **ONSET_LINE),
+]
+legend_labels = ['Channel 1 (selected)', 'Channel 2 (non-selected)',
+                 'raster: 1 dot = 1 spike', 'ramp onset (1500 ms)']
+fig.legend(legend_handles, legend_labels, loc='upper center', bbox_to_anchor=(0.5, 0.935),
+           ncol=4, frameon=False, fontsize=16)
+ax_msn.set_title('MSN response: raster of 40 sampled neurons per channel (bands, left axis) and\n'
+                 'mean firing rate of all 916 neurons of each channel (lines, right axis)',
+                 fontsize=20, pad=15)
 
 # Save
 output_dir = os.path.dirname(__file__)
-png_path = os.path.join(output_dir, "general_behaviour_reproduced.png")
+png_path = os.path.join(output_dir, "general_behaviour_reproduced.png")  # transparent background
+jpg_path = os.path.join(output_dir, "general_behaviour_reproduced.jpg")  # white background
 svg_path = os.path.join(output_dir, "general_behaviour_reproduced.svg")
 
-fig.savefig(png_path, dpi=150, bbox_inches='tight')
+fig.savefig(png_path, dpi=150, bbox_inches='tight', transparent=True)
+fig.savefig(jpg_path, dpi=150, bbox_inches='tight', facecolor='white', pil_kwargs={'quality': 95})
 fig.savefig(svg_path, bbox_inches='tight')
-print(f"✓ Saved: {png_path}")
-print(f"✓ Saved: {svg_path}")
+for path in (png_path, jpg_path, svg_path):
+    print(f"✓ Saved: {path}")
+
+
+# ─── Step 3b: D1 vs D2 figure ────────────────────────────────────────────────
+# Each channel contains both D1 and D2 MSNs: here their firing rates are shown
+# separately, using the per-population recorders created by msn.py.
+POP_STYLE = {'D1': dict(color=POP_COLORS['D1'], linestyle='-'),    # blue
+             'D2': dict(color=POP_COLORS['D2'], linestyle='-')}    # orange
+
+
+def population_rate(detector, n_pop, time_bin=50.0):
+    """Firing rate (Hz per neuron) of one population, in bins of time_bin ms."""
+    total_time = nest.GetKernelStatus('biological_time')
+    n_bins = int(total_time / time_bin)
+    spike_times = nest.GetStatus(detector, 'events')[0]['times']
+    counts, edges = np.histogram(spike_times, bins=n_bins, range=(0, total_time))
+    return (edges[:-1] + edges[1:]) / 2, counts / (n_pop * time_bin / 1000.0)
+
+
+with plt.rc_context({'font.size': 16}):
+    fig2 = plt.figure(figsize=(16.0, 10.0))
+    ax_ctx2 = plt.subplot2grid((10, 1), (0, 0), rowspan=2)
+    ax_ch = [plt.subplot2grid((10, 1), (2 + 4 * k, 0), rowspan=4) for k in range(2)]
+
+    plot_input_from_cortex(ax_ctx2)
+    fig2.suptitle('Firing rate of D1 and D2 MSNs within each action channel')
+
+    total_time = nest.GetKernelStatus('biological_time')
+    for k, ax in enumerate(ax_ch):
+        ax.axvspan(0, total_time, facecolor=CHANNEL_COLORS[k], alpha=0.125, zorder=0)  # channel colour, as in the raster
+        for pop, detectors, groups in (('D1', e.msn.spikedetector_msn_d1_channels, e.msn.msn_d1_channels),
+                                       ('D2', e.msn.spikedetector_msn_d2_channels, e.msn.msn_d2_channels)):
+            t, rate = population_rate(detectors[k], len(groups[k]))
+            ax.step(t, rate, where='mid', linewidth=2, label=f'{pop} ({len(groups[k])} neurons)', **POP_STYLE[pop])
+        ax.axvline(x=1500, **ONSET_LINE)
+        ax.set_ylabel('Firing rate (Hz)')
+        ax.set_ylim(0, 25)
+        ax.set_xlim(0, total_time)
+        ax.grid(True, alpha=0.3)
+        ax.text(0.01, 0.92, f'Channel {k + 1} ({"selected" if k == 0 else "non-selected"})',
+                transform=ax.transAxes, va='top', fontweight='bold')
+    ax_ch[0].tick_params(labelbottom=False)
+    ax_ch[1].set_xlabel('Time (ms)')
+    # one legend for both channel panels, below the title (each channel has 458 D1 + 458 D2 neurons)
+    handles, labels = ax_ch[0].get_legend_handles_labels()
+    fig2.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 0.955), ncol=2, frameon=False)
+    fig2.tight_layout()
+    fig2.subplots_adjust(top=0.88)
+
+    base = os.path.join(output_dir, "general_behaviour_D1_D2_reproduced")
+    fig2.savefig(base + ".png", dpi=150, bbox_inches='tight', transparent=True)
+    fig2.savefig(base + ".jpg", dpi=150, bbox_inches='tight', facecolor='white', pil_kwargs={'quality': 95})
+    fig2.savefig(base + ".svg", bbox_inches='tight')
+    for ext in (".png", ".jpg", ".svg"):
+        print(f"✓ Saved: {base}{ext}")
 
 
 # ─── Step 4: Print firing rate summary ───────────────────────────────────────
@@ -275,6 +349,11 @@ for ch_idx in [0, 1]:
     print(f"Channel {ch_idx + 1} ({ch_name}):")
     print(f"  Neurons: {n_neurons} ({n_active} spiked at least once)")
     print(f"  Steady-state firing rate (t>2000ms): {steady_rate:.2f} Hz")
+    for pop, detectors, groups in (('D1', e.msn.spikedetector_msn_d1_channels, e.msn.msn_d1_channels),
+                                   ('D2', e.msn.spikedetector_msn_d2_channels, e.msn.msn_d2_channels)):
+        t_pop = nest.GetStatus(detectors[ch_idx], 'events')[0]['times']
+        rate_pop = np.sum(t_pop >= 2000) / (len(groups[ch_idx]) * steady_duration_s)
+        print(f"    of which {pop} ({len(groups[ch_idx])} neurons): {rate_pop:.2f} Hz")
     print(f"  Target: {'~18.5 Hz' if ch_idx == 0 else '~2 Hz'}")
     print()
 
