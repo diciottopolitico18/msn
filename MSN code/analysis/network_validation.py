@@ -46,7 +46,7 @@ REFERENCE = {
 def run_one(seed, dt, threads, da):
     setup_kernel(dt=dt, seed=seed, threads=threads)
 
-    msn = MSN(curr=0)
+    msn = MSN()
     exp = ExperimentDAHD(dopamine_level=da, msn=msn)
     exp.run()
 

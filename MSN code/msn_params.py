@@ -1,12 +1,7 @@
-import numpy as np
-from math import floor, ceil
-
-from utils import dotdict, split_in_groups
+from utils import dotdict
 
 
 # Modifiable params
-
-is_verbose = [False, True][0]
 
 is_msn_active = [False, True][1]
 
@@ -25,7 +20,6 @@ params.sim = dotdict()
 params.sim.step = 0.1 # ms
 params.sim.seed = 1
 params.sim.n_threads = 8
-params.sim.verbose = is_verbose
 
 
 # NETWORK params ###############################################################
@@ -36,7 +30,6 @@ params.net.ctx_afferents_per_neuron = 250.0 #Humphries 2010
 
 params.net.n_msn_per_mm3 = 84900 #Humphries 2010, pag 2
 params.net.box_side_mm = 0.3 #Tomkins 2014, pag 4
-params.net.box_side_um = params.net.box_side_mm * 1000.0
 params.net.box_volume_mm3 = params.net.box_side_mm ** 3
 
 params.net.msn = dotdict()
@@ -44,7 +37,6 @@ params.net.msn.n = int(params.net.box_volume_mm3 * params.net.n_msn_per_mm3)
 params.net.msn.d1_n = int(params.net.msn.n * 0.5)
 params.net.msn.d2_n = int(params.net.msn.n * 0.5)
 params.net.msn.is_active = is_msn_active
-params.net.msn.reduction_factor = 1.0 / 10.0 #Cuando se usa una población poisson en lugar del msn, reducimos el número de neuronas para acelerar los calculos.
 
 
 # NEURONS params ###############################################################

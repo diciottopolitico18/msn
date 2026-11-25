@@ -1,15 +1,9 @@
 import nest
 
-from utils import verbose#, log_progress
 from msn import MSN
-from msn_params import params
-# from . import restart_kernel
 
 
 class Experiment:
-
-    time_bin = 20.0
-    interpolation_kind = ['linear', 'cubic'][1]
 
     def __init__(self):
         raise NotImplementedError("'Experiment' is a virtual class, you need to inherit it.")
@@ -32,7 +26,6 @@ class ExperimentDAHD(Experiment):
     def __init__(s, dopamine_level=0.3, msn=None):
 
         # Initial values
-        # restart_kernel()
         s.msn = MSN() if msn is None else msn
 
         # Setting dopamine
@@ -46,7 +39,6 @@ class ExperimentDAHD(Experiment):
         s.msn.configure()
 
 
-    # @verbose(_params.sim.verbose)
     def run(s, warming_up_time=1500):
         m = s.cortex_low_freq * s.msn.params.net.ctx_afferents_per_neuron
         M = s.cortex_high_freq * s.msn.params.net.ctx_afferents_per_neuron

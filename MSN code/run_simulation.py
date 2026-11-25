@@ -76,7 +76,7 @@ print("\n" + "=" * 60)
 print("Step 2: Running MSN simulation")
 print("=" * 60)
 
-msn = MSN(curr=0)
+msn = MSN()
 e_normal = ExperimentDAHD(dopamine_level=args.da, msn=msn)
 
 print("Simulating (warm-up 1500ms + ramp 50ms + steady 1000ms = 2550ms total)...")
