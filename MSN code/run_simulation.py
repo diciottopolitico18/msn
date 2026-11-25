@@ -19,6 +19,9 @@ from msn_params import params
 from msn import MSN
 from experiment import ExperimentDAHD
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "analysis"))
+from metrics import T_STEADY, binned_rate, window_rate  # noqa: E402
+
 ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 ap.add_argument("--dt", type=float, default=params.sim.step, help="simulation resolution in ms")
 ap.add_argument("--seed", type=int, default=params.sim.seed, help="NEST rng_seed")
@@ -163,15 +166,11 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
     ax2.set_ylabel('Firing rate (Hz)')
 
     total_time = nest.GetKernelStatus('biological_time')
-    n_bins = int(total_time / time_bin)
 
     for events, channel in spikes:
-        spike_times = events['times']
         n_channel = len(e.msn.msn_channels[channel])  # all neurons of the channel, not only those that spiked
-
-        counts, bin_edges = np.histogram(spike_times, bins=n_bins, range=(0, total_time))
-        rates = counts / (n_channel * (time_bin / 1000.0))
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+        bin_starts, rates = binned_rate(events['times'], n_channel, time_bin, t1=total_time)
+        bin_centers = bin_starts + time_bin / 2
 
         ax2.step(bin_centers, rates, color=CHANNEL_COLORS[channel], linewidth=1.5,
                 where='mid')
@@ -245,12 +244,10 @@ POP_STYLE = {'D1': dict(color=POP_COLORS['D1'], linestyle='-'),    # blue
 
 
 def population_rate(detector, n_pop, time_bin=50.0):
-    """Firing rate (Hz per neuron) of one population, in bins of time_bin ms."""
-    total_time = nest.GetKernelStatus('biological_time')
-    n_bins = int(total_time / time_bin)
+    """Firing rate (Hz per neuron) of one population, in bins of time_bin ms (returns bin centres)."""
     spike_times = nest.GetStatus(detector, 'events')[0]['times']
-    counts, edges = np.histogram(spike_times, bins=n_bins, range=(0, total_time))
-    return (edges[:-1] + edges[1:]) / 2, counts / (n_pop * time_bin / 1000.0)
+    bin_starts, rate = binned_rate(spike_times, n_pop, time_bin, t1=nest.GetKernelStatus('biological_time'))
+    return bin_starts + time_bin / 2, rate
 
 
 with plt.rc_context({'font.size': 16}):
@@ -296,31 +293,24 @@ print("\n" + "=" * 60)
 print("Step 4: Firing rate analysis")
 print("=" * 60)
 
-time_bin_analysis = 50.0
 total_time = nest.GetKernelStatus('biological_time')
-n_bins = int(total_time / time_bin_analysis)
 
 for ch_idx in [0, 1]:
     detector = e.msn.spikedetector_msn_channels[ch_idx]
     events = nest.GetStatus(detector, 'events')[0]
-    spike_times = events['times']
     n_neurons = len(e.msn.msn_channels[ch_idx])  # all neurons of the channel, not only those that spiked
     n_active = len(np.unique(events['senders']))
-
-    # Steady-state period (last 500ms)
-    steady_mask = spike_times >= 2000
-    steady_spikes = spike_times[steady_mask]
-    steady_duration_s = (total_time - 2000) / 1000.0
-    steady_rate = len(steady_spikes) / (n_neurons * steady_duration_s)
+    # steady-state window: same as analysis/network_validation.py
+    steady_rate = window_rate(events['times'], n_neurons, T_STEADY, total_time)
 
     ch_name = "SELECTED" if ch_idx == 0 else "NON-SELECTED"
     print(f"Channel {ch_idx + 1} ({ch_name}):")
     print(f"  Neurons: {n_neurons} ({n_active} spiked at least once)")
-    print(f"  Steady-state firing rate (t>2000ms): {steady_rate:.2f} Hz")
+    print(f"  Steady-state firing rate (t>{T_STEADY:.0f}ms): {steady_rate:.2f} Hz")
     for pop, detectors, groups in (('D1', e.msn.spikedetector_msn_d1_channels, e.msn.msn_d1_channels),
                                    ('D2', e.msn.spikedetector_msn_d2_channels, e.msn.msn_d2_channels)):
         t_pop = nest.GetStatus(detectors[ch_idx], 'events')[0]['times']
-        rate_pop = np.sum(t_pop >= 2000) / (len(groups[ch_idx]) * steady_duration_s)
+        rate_pop = window_rate(t_pop, len(groups[ch_idx]), T_STEADY, total_time)
         print(f"    of which {pop} ({len(groups[ch_idx])} neurons): {rate_pop:.2f} Hz")
     print(f"  Target: {'~18.5 Hz' if ch_idx == 0 else '~2 Hz'}")
     print()
