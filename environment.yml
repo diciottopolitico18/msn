@@ -12,6 +12,7 @@ dependencies:
   - libboost-headers
   - numpy
   - scipy
+  - pytest              # tests in "MSN code/tests" (run: pytest)
   - pip
   - pip:
       - nestml==9.0.1
