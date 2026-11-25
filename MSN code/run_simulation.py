@@ -79,7 +79,9 @@ print("=" * 60)
 msn = MSN()
 e_normal = ExperimentDAHD(dopamine_level=args.da, msn=msn)
 
-print("Simulating (warm-up 1500ms + ramp 50ms + steady 1000ms = 2550ms total)...")
+exp = msn.params.exp  # protocol: rates and durations (msn_params.py)
+print(f"Simulating (warm-up {exp.t_warmup:.0f}ms + ramp {exp.t_ramp_end - exp.t_warmup:.0f}ms + "
+      f"steady {exp.t_steady:.0f}ms = {exp.t_end:.0f}ms total)...")
 e_normal.run()
 print("✓ Simulation complete!")
 
@@ -101,54 +103,20 @@ ONSET_LINE = dict(color='#2ca02c', linestyle='--')   # stimulus onset, same gree
 
 
 def plot_input_from_cortex(ax, channels=[0, 1]):
-    """Plot cortical input frequency ramp for each channel."""
-    cortex_low_freq = 2.2
-    cortex_high_freq = 3.6
+    """Plot the cortical input rate per afferent of each channel: the same steps that ExperimentDAHD.run uses."""
     ctx_afferents = e.msn.params.net.ctx_afferents_per_neuron
-    m = cortex_low_freq * ctx_afferents
-    M = cortex_high_freq * ctx_afferents
+    ramp = e.ramp_rates()
 
     for ch_idx in channels:
-        rates = []
-        times = []
-
-        # Warm-up
-        rates.append(m / ctx_afferents)
-        times.append(0)
-        rates.append(m / ctx_afferents)
-        times.append(1500)
-
-        # First ramp (25 ms)
-        for i in range(25):
-            fi = i / 50.0
-            t = 1500 + i
-            if ch_idx == 0:
-                r = m + (M - m) * fi
-            else:
-                r = m + (M - m) * fi
-            rates.append(r / ctx_afferents)
-            times.append(t)
-
-        # Second ramp (25 ms)
-        for i in range(25):
-            fi = i / 50.0
-            t = 1525 + i
-            if ch_idx == 0:
-                r = (m + M) * 0.5 + (M - m) * fi
-            else:
-                r = (m + M) * 0.5 - (M - m) * fi
-            rates.append(r / ctx_afferents)
-            times.append(t)
-
-        # Steady
+        # warm-up, one point per ramp step, then flat until the end
+        times = [0, exp.t_warmup] + [exp.t_warmup + k * exp.ramp_step_ms for k in range(len(ramp))] + [exp.t_end]
+        rates = [exp.ctx_low_Hz] * 2 + [r[ch_idx] / ctx_afferents for r in ramp]
         rates.append(rates[-1])
-        times.append(2550)
-
         ax.plot(times, rates, color=CHANNEL_COLORS[ch_idx], linewidth=1.5)
 
-    ax.axvline(x=1500, **ONSET_LINE)  # stimulus onset, as in the MSN panel
+    ax.axvline(x=exp.t_warmup, **ONSET_LINE)  # stimulus onset, as in the MSN panel
     ax.set_ylabel('Ctx input\n(Hz per afferent)', fontsize=14)
-    ax.set_xlim(0, 2550)
+    ax.set_xlim(0, exp.t_end)
     ax.set_xticks([])
 
 
@@ -218,7 +186,7 @@ def rasterplot(ax, nucleus_name='msn', channels=0, n_neurons=40, time_bin=50.0,
     ax1.set_yticklabels([f'Ch {c + 1}' for c in channels])
 
     # Stimulus onset line
-    ax1.axvline(x=1500, **ONSET_LINE)
+    ax1.axvline(x=exp.t_warmup, **ONSET_LINE)
 
     if time_axis:
         ax1.set_xlabel('Time (ms)')
@@ -249,7 +217,7 @@ legend_handles = [
     plt.Line2D([], [], **ONSET_LINE),
 ]
 legend_labels = ['Channel 1 (selected)', 'Channel 2 (non-selected)',
-                 'raster: 1 dot = 1 spike', 'ramp onset (1500 ms)']
+                 'raster: 1 dot = 1 spike', f'ramp onset ({exp.t_warmup:.0f} ms)']
 fig.legend(legend_handles, legend_labels, loc='upper center', bbox_to_anchor=(0.5, 0.935),
            ncol=4, frameon=False, fontsize=16)
 ax_msn.set_title('MSN response: raster of 40 sampled neurons per channel (bands, left axis) and\n'
@@ -300,7 +268,7 @@ with plt.rc_context({'font.size': 16}):
                                        ('D2', e.msn.spikedetector_msn_d2_channels, e.msn.msn_d2_channels)):
             t, rate = population_rate(detectors[k], len(groups[k]))
             ax.step(t, rate, where='mid', linewidth=2, label=f'{pop} ({len(groups[k])} neurons)', **POP_STYLE[pop])
-        ax.axvline(x=1500, **ONSET_LINE)
+        ax.axvline(x=exp.t_warmup, **ONSET_LINE)
         ax.set_ylabel('Firing rate (Hz)')
         ax.set_ylim(0, 25)
         ax.set_xlim(0, total_time)

@@ -124,5 +124,17 @@ params.syn.msn_msn.syn_spec_random.weight = 0.25 #A mano
 params.syn.msn_msn.syn_spec_random.receptor_type = 3
 
 
+# PROTOCOL params ##############################################################
+# Cortical ramp experiment (ExperimentDAHD) of González-Redondo et al. (2020), as in Rusiecka (2022).
+# The only place where these numbers are written: experiment.py runs them, analysis/metrics.py and
+# run_simulation.py read them.
 
-
+params.exp = dotdict()
+params.exp.ctx_low_Hz = 2.2        # rate per cortical afferent: warm-up, non-selected and background channel
+params.exp.ctx_high_Hz = 3.6       # rate per cortical afferent of the selected channel after the ramp
+params.exp.t_warmup = 1500.0       # ms at ctx_low_Hz before the ramp
+params.exp.ramp_steps = 25         # each half of the ramp has ramp_steps steps ...
+params.exp.ramp_step_ms = 1.0      # ... of 1 ms (50 ms in total)
+params.exp.t_steady = 1000.0       # ms after the ramp
+params.exp.t_ramp_end = params.exp.t_warmup + 2 * params.exp.ramp_steps * params.exp.ramp_step_ms
+params.exp.t_end = params.exp.t_ramp_end + params.exp.t_steady

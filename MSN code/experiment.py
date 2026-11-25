@@ -16,12 +16,7 @@ class Experiment:
 
 
 class ExperimentDAHD(Experiment):
-
-    # Frecuencias de disparo de la neurona cortical
-    cortex_low_freq  = 2.2
-    cortex_high_freq = 3.6
-
-
+    # The protocol (rates and durations) is in msn_params.py, params.exp.
 
     def __init__(s, dopamine_level=0.3, msn=None):
 
@@ -39,30 +34,34 @@ class ExperimentDAHD(Experiment):
         s.msn.configure()
 
 
-    def run(s, warming_up_time=1500):
-        m = s.cortex_low_freq * s.msn.params.net.ctx_afferents_per_neuron
-        M = s.cortex_high_freq * s.msn.params.net.ctx_afferents_per_neuron
+    def ramp_rates(s):
+        """Total Poisson rate (afferent rate x afferents) of channels 0 and 1 in each step of the ramp."""
+        exp = s.msn.params.exp
+        m = exp.ctx_low_Hz * s.msn.params.net.ctx_afferents_per_neuron
+        M = exp.ctx_high_Hz * s.msn.params.net.ctx_afferents_per_neuron
+        n = exp.ramp_steps
+        # Primera mitad de la rampa: both channels rise together towards the middle rate
+        first = [(m + (M-m)*(i/(2*n)), m + (M-m)*(i/(2*n))) for i in range(n)]
+        # Segunda mitad: the selected channel keeps rising, the other one goes back down
+        second = [((m+M)*0.5 + (M-m)*(i/(2*n)), (m+M)*0.5 - (M-m)*(i/(2*n))) for i in range(n)]
+        return first + second
 
-        # Estado inicial, se mantiene por dos segundos
+
+    def run(s, warming_up_time=None):
+        exp = s.msn.params.exp
+        warming_up_time = exp.t_warmup if warming_up_time is None else warming_up_time
+        m = exp.ctx_low_Hz * s.msn.params.net.ctx_afferents_per_neuron
+
+        # Estado inicial: every channel (also the background one) at the low rate
         for channel in s.msn.poisson:
             nest.SetStatus(channel, {'rate': m})
-        nest.SetStatus(s.msn.poisson[0], {'rate': m})
-        nest.SetStatus(s.msn.poisson[1], {'rate': m})
         nest.Simulate(warming_up_time)
 
-        # Primera mitad de la rampa, durante 25 ms
-        for i in range(25):
-            fi = i/50.0
-            nest.SetStatus(s.msn.poisson[0], {'rate': m + (M-m)*fi})
-            nest.SetStatus(s.msn.poisson[1], {'rate': m + (M-m)*fi})
-            nest.Simulate(1.0)
+        # Ramp, one step at a time
+        for rate_0, rate_1 in s.ramp_rates():
+            nest.SetStatus(s.msn.poisson[0], {'rate': rate_0})
+            nest.SetStatus(s.msn.poisson[1], {'rate': rate_1})
+            nest.Simulate(exp.ramp_step_ms)
 
-        # Segunda mitad de la rampa, durante 25 ms
-        for i in range(25):
-            fi = i/50.0
-            nest.SetStatus(s.msn.poisson[0], {'rate': (m+M)*0.5 + (M-m)*fi})
-            nest.SetStatus(s.msn.poisson[1], {'rate': (m+M)*0.5 - (M-m)*fi})
-            nest.Simulate(1.0)
-
-        # Finalización, 1000 ms
-        nest.Simulate(1000.0)
+        # Finalización
+        nest.Simulate(exp.t_steady)
