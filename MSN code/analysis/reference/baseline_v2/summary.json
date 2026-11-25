@@ -1,0 +1,188 @@
+{
+  "args": {
+    "seeds": 10,
+    "dt": 0.1,
+    "threads": 8,
+    "da": 0.3,
+    "out": "results/vth40_explore"
+  },
+  "nest_version": "3.8.0",
+  "per_seed": [
+    {
+      "first_activity_ms": 300.0,
+      "rate_end_warmup_selected_Hz": 1.9323144104803496,
+      "rate_end_warmup_nonselected_Hz": 2.4563318777292578,
+      "rate_first25ms_selected_Hz": 2.4454148471615724,
+      "rate_first25ms_nonselected_Hz": 2.3144104803493453,
+      "rate_steady_selected_Hz": 18.094481937276697,
+      "rate_steady_nonselected_Hz": 2.1973005160778087,
+      "min_nonselected_after_ramp_Hz": 0.8733624454148472,
+      "convergence_selected_ms": 150.0,
+      "transient_selectivity": 0.01979919013863818,
+      "steadystate_selectivity_%": 3.2742384700648164
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 1.8231441048034935,
+      "rate_end_warmup_nonselected_Hz": 2.3253275109170306,
+      "rate_first25ms_selected_Hz": 2.7074235807860263,
+      "rate_first25ms_nonselected_Hz": 2.4454148471615724,
+      "rate_steady_selected_Hz": 18.187772925764193,
+      "rate_steady_nonselected_Hz": 2.1953156014291384,
+      "min_nonselected_after_ramp_Hz": 0.7423580786026202,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": -0.003218713699645548,
+      "steadystate_selectivity_%": -6.680671213504774
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 2.216157205240175,
+      "rate_end_warmup_nonselected_Hz": 2.1943231441048034,
+      "rate_first25ms_selected_Hz": 1.9213973799126638,
+      "rate_first25ms_nonselected_Hz": 3.056768558951965,
+      "rate_steady_selected_Hz": 17.937673680031757,
+      "rate_steady_nonselected_Hz": 2.260817784835252,
+      "min_nonselected_after_ramp_Hz": 0.9170305676855895,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": 0.03880890594397046,
+      "steadystate_selectivity_%": -4.420597363755574
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 2.074235807860262,
+      "rate_end_warmup_nonselected_Hz": 2.106986899563319,
+      "rate_first25ms_selected_Hz": 2.3580786026200875,
+      "rate_first25ms_nonselected_Hz": 2.532751091703057,
+      "rate_steady_selected_Hz": 18.00714569273521,
+      "rate_steady_nonselected_Hz": 2.334259626836046,
+      "min_nonselected_after_ramp_Hz": 1.0043668122270744,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": 0.003384180685913618,
+      "steadystate_selectivity_%": -12.757618216735068
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 2.1724890829694323,
+      "rate_end_warmup_nonselected_Hz": 2.183406113537118,
+      "rate_first25ms_selected_Hz": 2.4017467248908297,
+      "rate_first25ms_nonselected_Hz": 3.013100436681223,
+      "rate_steady_selected_Hz": 18.062723302897975,
+      "rate_steady_nonselected_Hz": 2.296546248511314,
+      "min_nonselected_after_ramp_Hz": 0.6550218340611355,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": 0.039963862609453726,
+      "steadystate_selectivity_%": -6.725583486842468
+    },
+    {
+      "first_activity_ms": 400.0,
+      "rate_end_warmup_selected_Hz": 2.2707423580786026,
+      "rate_end_warmup_nonselected_Hz": 2.150655021834061,
+      "rate_first25ms_selected_Hz": 2.2270742358078603,
+      "rate_first25ms_nonselected_Hz": 2.9694323144104806,
+      "rate_steady_selected_Hz": 18.072647876141325,
+      "rate_steady_nonselected_Hz": 2.262802699483922,
+      "min_nonselected_after_ramp_Hz": 0.8296943231441049,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": 0.018139616999802044,
+      "steadystate_selectivity_%": -6.6099292055515235
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 2.3471615720524017,
+      "rate_end_warmup_nonselected_Hz": 2.1724890829694323,
+      "rate_first25ms_selected_Hz": 2.3580786026200875,
+      "rate_first25ms_nonselected_Hz": 1.7903930131004369,
+      "rate_steady_selected_Hz": 18.046843985708612,
+      "rate_steady_nonselected_Hz": 2.169511710996427,
+      "min_nonselected_after_ramp_Hz": 0.8733624454148472,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": 0.005004406031878794,
+      "steadystate_selectivity_%": -5.180564232954343
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 2.03056768558952,
+      "rate_end_warmup_nonselected_Hz": 2.161572052401747,
+      "rate_first25ms_selected_Hz": 2.3580786026200875,
+      "rate_first25ms_nonselected_Hz": 2.663755458515284,
+      "rate_steady_selected_Hz": 18.0011909487892,
+      "rate_steady_nonselected_Hz": 2.2330289797538705,
+      "min_nonselected_after_ramp_Hz": 0.7860262008733625,
+      "convergence_selected_ms": 150.0,
+      "transient_selectivity": 0.006149426697704352,
+      "steadystate_selectivity_%": -7.256104476725578
+    },
+    {
+      "first_activity_ms": 350.0,
+      "rate_end_warmup_selected_Hz": 2.4126637554585155,
+      "rate_end_warmup_nonselected_Hz": 2.2489082969432315,
+      "rate_first25ms_selected_Hz": 1.9650655021834063,
+      "rate_first25ms_nonselected_Hz": 2.183406113537118,
+      "rate_steady_selected_Hz": 18.038904327113933,
+      "rate_steady_nonselected_Hz": 2.262802699483922,
+      "min_nonselected_after_ramp_Hz": 1.1790393013100438,
+      "convergence_selected_ms": 100.0,
+      "transient_selectivity": 0.016490553638583094,
+      "steadystate_selectivity_%": -5.213413387713084
+    },
+    {
+      "first_activity_ms": 400.0,
+      "rate_end_warmup_selected_Hz": 2.2598253275109172,
+      "rate_end_warmup_nonselected_Hz": 2.1943231441048034,
+      "rate_first25ms_selected_Hz": 2.663755458515284,
+      "rate_first25ms_nonselected_Hz": 2.620087336244542,
+      "rate_steady_selected_Hz": 18.064708217546645,
+      "rate_steady_nonselected_Hz": 2.258832870186582,
+      "min_nonselected_after_ramp_Hz": 1.0480349344978166,
+      "convergence_selected_ms": 150.0,
+      "transient_selectivity": -0.02441851523046834,
+      "steadystate_selectivity_%": -8.914360963478508
+    }
+  ],
+  "summary": {
+    "first_activity_ms": {
+      "mean": 355.0,
+      "sd": 26.92582403567252
+    },
+    "rate_end_warmup_selected_Hz": {
+      "mean": 2.153930131004367,
+      "sd": 0.17704784989633368
+    },
+    "rate_end_warmup_nonselected_Hz": {
+      "mean": 2.21943231441048,
+      "sd": 0.0967928827437461
+    },
+    "rate_first25ms_selected_Hz": {
+      "mean": 2.3406113537117905,
+      "sd": 0.24171794765236768
+    },
+    "rate_first25ms_nonselected_Hz": {
+      "mean": 2.5589519650655026,
+      "sd": 0.37978715991543927
+    },
+    "rate_steady_selected_Hz": {
+      "mean": 18.051409289400553,
+      "sd": 0.062289961403879504
+    },
+    "rate_steady_nonselected_Hz": {
+      "mean": 2.247121873759428,
+      "sd": 0.04715958375423333
+    },
+    "min_nonselected_after_ramp_Hz": {
+      "mean": 0.8908296943231442,
+      "sd": 0.14640222370515468
+    },
+    "convergence_selected_ms": {
+      "mean": 115.0,
+      "sd": 22.9128784747792
+    },
+    "transient_selectivity": {
+      "mean": 0.012010291381583039,
+      "sd": 0.018261157439167314
+    },
+    "steadystate_selectivity_%": {
+      "mean": -6.0484604077196105,
+      "sd": 3.8323781367303713
+    }
+  }
+}

@@ -78,7 +78,7 @@ model msn_neuron:
         # lower bound of membrane potential
         V_m = max(V_min, V_m)
 
-    onCondition(V_m >= 30 mV):
+    onCondition(V_m >= V_th):
         # threshold crossing
         dop = d * (1.0 - L_d1 * phi_1)
         V_m = c
