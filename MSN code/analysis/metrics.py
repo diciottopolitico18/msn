@@ -31,7 +31,7 @@ def window_rate(times, n_neurons, t0, t1):
 
 
 def smoothed_signal(times, n_neurons):
-    """1-ms rate convolved with a normalised Gaussian (as in MSN._compute_signals)."""
+    """1-ms rate convolved with a normalised Gaussian (as the original MSN._compute_signals, now in legacy/)."""
     _, r = binned_rate(times, n_neurons, 1.0)
     win = gaussian(M=50, std=7.5)
     return np.convolve(r, win / win.sum(), mode="same")

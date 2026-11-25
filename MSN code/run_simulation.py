@@ -2,7 +2,7 @@
 """
 run_simulation.py — Standalone script to reproduce the MSN general behaviour.
 
-Replicates the workflow of '01 - General behaviour.ipynb':
+Replicates the workflow of the original notebook 'legacy/01 - General behaviour.ipynb':
   1. Loads the compiled NESTML MSN model (run compile_module.py first)
   2. Runs the cortical ramp experiment (ExperimentDAHD)
   3. Generates the composite raster + firing rate figure
@@ -35,7 +35,7 @@ print(f"Python: {sys.version}")
 import nest
 print(f"NEST:   {nest.__version__}")
 
-NEST_INSTALL = nest.ll_api.sli_func("statusdict/prefix ::")
+NEST_INSTALL = sys.prefix  # NEST is installed in the conda environment (same value as SLI statusdict/prefix)
 print(f"NEST install location: {NEST_INSTALL}")
 
 import numpy as np
