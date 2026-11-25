@@ -1,10 +1,10 @@
-"""One-command regression check against baseline v0.
+"""One-command regression check against baseline v1 (betas split by population; v0 kept in reference/baseline_v0).
 
 Usage (from the code folder, in env_nest): python analysis/check_baseline.py
 
 Runs network_validation.py with the baseline conditions (dt 0.1 ms, seeds 1-10,
 8 threads, DA 0.3; ~45 s) and compares the result seed by seed with
-analysis/reference/baseline_v0/summary.json.
+analysis/reference/baseline_v1/summary.json.
 Prints IDENTICAL (exit code 0) or the differing values (exit code 1).
 """
 import os
@@ -13,7 +13,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CODE_DIR = os.path.dirname(HERE)
-REFERENCE = os.path.join(HERE, "reference", "baseline_v0")
+REFERENCE = os.path.join(HERE, "reference", "baseline_v1")
 OUT = os.path.join("results", "_check")
 RUN_DIR = os.path.join(OUT, "dt0.1_da0.3_seeds10_thr8")  # folder name built by network_validation.py
 
