@@ -120,12 +120,11 @@ class MSN:
 
 
 
-            #if msn is active, create and connect a multimeter on msn
-            s.multimeter_msn = nest.Create("multimeter")
-            nest.SetStatus(s.multimeter_msn, {"record_from":["V_m", "U_m"]})
-
-            #connect the multimeter to the second neuron in the msn population
-            nest.Connect(s.multimeter_msn, s.msn)
+            # V_m and U_m of all 2292 MSNs every 1 ms (~190 MB per run): only if params.sim.record_vm
+            if s.params.sim.record_vm:
+                s.multimeter_msn = nest.Create("multimeter")
+                nest.SetStatus(s.multimeter_msn, {"record_from":["V_m", "U_m"]})
+                nest.Connect(s.multimeter_msn, s.msn)
 
     def plot_activity(s, nucleus_name, channels=True, frequency=True, time_range=None, time_bin=50, n_bins=None, y_range=None):
         nucleus_name = nucleus_name.lower()

@@ -20,6 +20,7 @@ params.sim = dotdict()
 params.sim.step = 0.1 # ms
 params.sim.seed = 1
 params.sim.n_threads = 8
+params.sim.record_vm = False  # multimeter on V_m and U_m of every MSN (msn.py); no script reads it, ~190 MB per run
 
 
 # NETWORK params ###############################################################
