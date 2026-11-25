@@ -10,6 +10,7 @@ import os
 import numpy as np
 import pytest
 
+from compare_runs import differences
 from metrics import metrics
 from network_validation import run_one
 
@@ -22,10 +23,7 @@ TOL_HZ = {"rate_steady_selected_Hz": 0.3, "rate_steady_nonselected_Hz": 0.15}
 
 @pytest.mark.parametrize("seed", [1, 2])
 def test_baseline_exact(seed):
-    m = metrics(run_one(seed, 0.1, 8, 0.3))
-    ref = REF["per_seed"][seed - 1]
-    for k, v in ref.items():
-        assert m[k] == v or (np.isnan(m[k]) and np.isnan(v)), k
+    assert differences([REF["per_seed"][seed - 1]], [metrics(run_one(seed, 0.1, 8, 0.3))]) == []
 
 
 @pytest.mark.slow

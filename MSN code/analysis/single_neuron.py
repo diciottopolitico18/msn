@@ -47,38 +47,70 @@ def create_msn(cell_params, n=1, da=None):
     return neurons
 
 
+def spike_response(dt, cell, rport, w, var, t_spike=200.0, delay=1.0, t_end=1200.0):
+    """One spike on one receptor of a single neuron: times, synaptic variable h, V_m, arrival time."""
+    setup_kernel(dt=dt)
+    n = create_msn(CELLS[cell])
+    sg = nest.Create("spike_generator", params={"spike_times": [t_spike]})
+    nest.Connect(sg, n, syn_spec={"weight": w, "delay": delay, "receptor_type": rport})
+    mm = nest.Create("multimeter", params={"record_from": [var, "V_m"], "interval": dt})
+    nest.Connect(mm, n)
+    nest.Simulate(t_end)
+    ev = mm.events
+    return ev["times"], ev[var], ev["V_m"], t_spike + delay
+
+
+def kernel_jump_and_tau(t, h, w, tau, t_arr, dt):
+    """Check of Eq. 10: peak of h, whether the jump equals w, and the fitted decay time constant."""
+    # jump: the first sample after arrival lies between w*exp(-dt/tau) and w
+    h_max = h.max()
+    jump_ok = w * np.exp(-1.01 * dt / tau) <= h_max <= w * (1 + 1e-9)
+    # tau from the slope of log(h) (independent of the exact jump time)
+    mask = (t > t_arr + dt) & (h > h_max * 1e-3) & (t < t_arr + 3 * tau)
+    slope = np.polyfit(t[mask], np.log(h[mask]), 1)[0]
+    return h_max, jump_ok, -1.0 / slope
+
+
+def fi_curves(dt, cells_da, currents, t_settle=300.0, t_meas=1000.0):
+    """Firing rate (Hz) vs injected current for each (cell, DA): one neuron per current, one simulation."""
+    setup_kernel(dt=dt)
+    groups = {}
+    for cell, da in cells_da:
+        n = create_msn(CELLS[cell], len(currents), da=da)
+        n.I_e = currents
+        sr = nest.Create("spike_recorder", params={"start": t_settle})
+        nest.Connect(n, sr)
+        groups[(cell, da)] = (n, sr)
+
+    nest.Simulate(t_settle + t_meas)
+
+    rates = {}
+    for key, (n, sr) in groups.items():
+        first = n.global_id if len(n) == 1 else n[0].global_id
+        counts = np.bincount(sr.events["senders"] - first, minlength=len(n))
+        rates[key] = counts / (t_meas / 1000.0)
+    return rates
+
+
+def rheobase(currents, rate):
+    """First injected current that makes the neuron fire (NaN if none does)."""
+    idx = np.nonzero(rate > 0)[0]
+    return currents[idx[0]] if len(idx) else np.nan
+
+
 # ----------------------------------------------------------------------------
 # A) Synaptic response
 # ----------------------------------------------------------------------------
 def synaptic_test(dt, out_dir):
-    t_spike, delay, t_end = 200.0, 1.0, 1200.0
     rows = []
     fig, axes = plt.subplots(2, 3, figsize=(14, 8), sharex="col")
 
     for col, (name, rport, w, var, tau_key) in enumerate(RECEPTORS):
         taus = {}
         for cell, cp in CELLS.items():
-            setup_kernel(dt=dt)
-            n = create_msn(cp)
-            sg = nest.Create("spike_generator", params={"spike_times": [t_spike]})
-            nest.Connect(sg, n, syn_spec={"weight": w, "delay": delay, "receptor_type": rport})
-            mm = nest.Create("multimeter", params={"record_from": [var, "V_m"], "interval": dt})
-            nest.Connect(mm, n)
-            nest.Simulate(t_end)
-
-            ev = mm.events
-            t, h, v = ev["times"], ev[var], ev["V_m"]
+            t, h, v, t_arr = spike_response(dt, cell, rport, w, var)
             tau = cp[tau_key]
-            t_arr = t_spike + delay
-
-            # jump: the first sample after arrival lies between w*exp(-dt/tau) and w
-            h_max = h.max()
-            jump_ok = w * np.exp(-1.01 * dt / tau) <= h_max <= w * (1 + 1e-9)
-
-            # tau from the slope of log(h) (independent of the exact jump time)
-            mask = (t > t_arr + dt) & (h > h_max * 1e-3) & (t < t_arr + 3 * tau)
-            slope = np.polyfit(t[mask], np.log(h[mask]), 1)[0]
-            tau_fit = -1.0 / slope
+            h_max, jump_ok, tau_fit = kernel_jump_and_tau(t, h, w, tau, t_arr, dt)
 
             # PSP: change of V_m relative to the value just before the spike
             v0 = v[np.searchsorted(t, t_arr) - 1]
@@ -139,18 +171,7 @@ def synaptic_test(dt, out_dir):
 def fi_test(dt, out_dir, da_levels=(0.0, 0.3, 0.6, 1.0), i_max=600.0, i_step=5.0,
             t_settle=300.0, t_meas=1000.0):
     currents = np.arange(0.0, i_max + i_step, i_step)
-    setup_kernel(dt=dt)
-
-    groups = {}
-    for cell, cp in CELLS.items():
-        for da in da_levels:
-            n = create_msn(cp, len(currents), da=da)
-            n.I_e = currents
-            sr = nest.Create("spike_recorder", params={"start": t_settle})
-            nest.Connect(n, sr)
-            groups[(cell, da)] = (n, sr)
-
-    nest.Simulate(t_settle + t_meas)
+    results = fi_curves(dt, [(cell, da) for cell in CELLS for da in da_levels], currents, t_settle, t_meas)
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), sharey=True)
     # DA is ordered: light gray (DA = 0) -> black (DA = 1)
@@ -162,24 +183,17 @@ def fi_test(dt, out_dir, da_levels=(0.0, 0.3, 0.6, 1.0), i_max=600.0, i_step=5.0
     zoom_i, zoom_f = (200.0, 320.0), (-1.0, 20.0)   # region around the rheobase
     print("\nB) f-I curve  (rate in Hz over %.0f ms after %.0f ms of settling)" % (t_meas, t_settle))
     print(f"{'cell':4} {'DA':>4} {'rheobase (pA)':>14} {'f@300pA':>8} {'f@400pA':>8} {'f@600pA':>8}")
-    results = {}
     for ax, cell in zip(axes, CELLS):
         # D2 curves leave the upper-left corner empty: legend on the right, bigger zoom
         inset_box = [0.07, 0.30, 0.40, 0.38] if cell == "D1" else [0.08, 0.40, 0.50, 0.50]
         inset = ax.inset_axes(inset_box)
         for da, color in zip(da_levels, colors):
-            n, sr = groups[(cell, da)]
-            senders = sr.events["senders"]
-            first = n.global_id if len(n) == 1 else n[0].global_id
-            counts = np.bincount(senders - first, minlength=len(n))
-            rate = counts / (t_meas / 1000.0)
-            results[(cell, da)] = rate
-            idx = np.nonzero(rate > 0)[0]
-            rheo = currents[idx[0]] if len(idx) else np.nan
+            rate = results[(cell, da)]
+            rheo = rheobase(currents, rate)
             for a in (ax, inset):
                 a.plot(currents, rate, color=color, label=f"DA = {da}  (rheobase {rheo:.0f} pA)")
                 # rheobase marker: first current that produces spikes
-                a.plot(rheo, rate[idx[0]], "o", color=color, ms=5, zorder=3)
+                a.plot(rheo, rate[currents == rheo][0], "o", color=color, ms=5, zorder=3)
             f_at = lambda i: rate[np.argmin(np.abs(currents - i))]
             print(f"{cell:4} {da:4.1f} {rheo:14.0f} {f_at(300):8.1f} {f_at(400):8.1f} {f_at(600):8.1f}")
         ax.set_title(f"MSN {cell}", fontsize=12, pad=34)
